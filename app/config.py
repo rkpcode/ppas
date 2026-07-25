@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     SARVAM_STT_MODEL: str = "saaras:v3"
     PUSH_TO_TALK_HOTKEY: str = "f9"
     
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    HF_TOKEN: str = ""
+    
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
