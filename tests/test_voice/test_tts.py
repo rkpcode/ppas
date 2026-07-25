@@ -11,8 +11,9 @@ async def test_synthesize_speech_success():
     mock_base64 = base64.b64encode(mock_audio_bytes).decode('utf-8')
     
     mock_response = MagicMock()
+    mock_response.headers = {"content-type": "application/json"}
     mock_response.status_code = 200
-    mock_response.json.return_value = {"audios": [mock_base64]}
+    mock_response.json.return_value = {"audio": mock_base64}
     
     with patch("httpx.AsyncClient.post", return_value=mock_response):
         result = await synthesize_speech("Hello there")
