@@ -15,7 +15,8 @@ class ParseTextRequest(BaseModel):
     text: str = Field(..., description="Spoken sales text (e.g. 'Dolo 650 2 strip 60 rupees')")
 
 class ConfirmSaleRequest(BaseModel):
-    medicine_id: int
+    medicine_id: Optional[int] = None
+    medicine_name: Optional[str] = None
     quantity: int = Field(..., gt=0)
     total_amount: float = Field(..., ge=0)
     customer_name: Optional[str] = None
@@ -77,6 +78,7 @@ def confirm_sale(
             db=db,
             staff_id=current_user.id,
             medicine_id=request.medicine_id,
+            medicine_name=request.medicine_name,
             quantity=request.quantity,
             total_amount=request.total_amount,
             customer_name=request.customer_name
