@@ -47,3 +47,9 @@ export async function confirmBulkStock(items) {
     body: JSON.stringify({ items }),
   });
 }
+
+export async function deleteMedicine(id) {
+  return apiFetch(`/api/v1/stock/medicines/${id}`, {
+    method: 'DELETE',
+  });
+}

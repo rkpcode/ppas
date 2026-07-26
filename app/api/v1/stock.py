@@ -116,3 +116,20 @@ def confirm_bulk_stock(
         return stock_service.bulk_stock_entry(db, data.items)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Bulk stock entry failed: {str(e)}")
+
+@router.delete("/medicines/{medicine_id}")
+def delete_medicine(
+    medicine_id: int,
+    current_user: Annotated[Staff, Depends(get_current_user)],
+    db: Session = Depends(get_db)
+):
+    """Delete a medicine entirely, provided it has no sales."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only admin can delete medicines.")
+        
+    try:
+        return stock_service.delete_medicine(db, medicine_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

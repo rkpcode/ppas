@@ -301,3 +301,17 @@ def bulk_stock_entry(db: Session, items: List[BulkStockItem]) -> Dict[str, Any]:
         "items": results,
         "message": f"{len(results)} medicines ka stock successfully add ho gaya!"
     }
+
+def delete_medicine(db: Session, medicine_id: int):
+    medicine = db.query(Medicine).filter(Medicine.id == medicine_id).first()
+    if not medicine:
+        raise ValueError("Medicine not found")
+    
+    # Check if there are sales records linked to this medicine
+    from app.models.sale import SaleItem
+    if db.query(SaleItem).filter(SaleItem.medicine_id == medicine_id).first():
+        raise ValueError("Cannot delete this medicine because it has existing sales records.")
+        
+    db.delete(medicine)
+    db.commit()
+    return {"message": "Medicine deleted successfully"}

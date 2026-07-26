@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { getInventory } from '../api/inventory';
-import { createMedicine, updateMedicine, addBatch } from '../api/stock';
+import { createMedicine, updateMedicine, addBatch, deleteMedicine } from '../api/stock';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/ui/Toast';
 import styles from './InventoryPage.module.css';
@@ -12,7 +13,7 @@ function StockBadge({ qty }) {
   return <span className={`${styles.badge} ${styles.badgeOk}`}>IN STOCK</span>;
 }
 
-function MedicineCard({ item, onEdit, onAddStock }) {
+function MedicineCard({ item, onEdit, onDelete }) {
   const stock = item.total_stock ?? item.quantity_strips ?? 0;
   const price = item.unit_price ?? item.price_per_strip;
   const unit = item.unit_type || 'strip';
@@ -37,6 +38,9 @@ function MedicineCard({ item, onEdit, onAddStock }) {
       </div>
       <div className={styles.cardActions}>
         <button className={styles.actionBtn} onClick={() => onEdit(item)}>✏️ Edit</button>
+        {onDelete && (
+          <button className={styles.actionBtn} style={{ color: 'var(--error)' }} onClick={() => onDelete(item)}>🗑️ Delete</button>
+        )}
       </div>
     </div>
   );
@@ -48,9 +52,22 @@ export function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const searchRef = useRef(null);
   const { toasts, success, error } = useToast();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [medModal, setMedModal] = useState({ open: false, data: null });
   const [batchModal, setBatchModal] = useState({ open: false, data: null });
+
+  async function handleDeleteMedicine(item) {
+    if (!window.confirm(`Are you sure you want to delete ${item.name}? This will remove all its stock as well.`)) return;
+    try {
+      await deleteMedicine(item.id);
+      success("Medicine deleted successfully!");
+      load(search);
+    } catch (err) {
+      error(err.message);
+    }
+  }
 
   async function load(q = '') {
     setLoading(true);
@@ -163,13 +180,13 @@ export function InventoryPage() {
           {outOfStock.length > 0 && (
             <>
               <p className={styles.groupLabel}>❌ Out of Stock</p>
-              {outOfStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onAddStock={d => setBatchModal({open: true, data: d})} />)}
+              {outOfStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onDelete={isAdmin ? handleDeleteMedicine : null} />)}
             </>
           )}
           {lowStock.length > 0 && (
             <>
               <p className={styles.groupLabel}>⚠️ Low Stock</p>
-              {lowStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onAddStock={d => setBatchModal({open: true, data: d})} />)}
+              {lowStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onDelete={isAdmin ? handleDeleteMedicine : null} />)}
             </>
           )}
           {inStock.length > 0 && (
@@ -177,7 +194,7 @@ export function InventoryPage() {
               {(outOfStock.length > 0 || lowStock.length > 0) && (
                 <p className={styles.groupLabel}>✅ In Stock</p>
               )}
-              {inStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onAddStock={d => setBatchModal({open: true, data: d})} />)}
+              {inStock.map(item => <MedicineCard key={item.id} item={item} onEdit={d => setMedModal({open: true, data: d})} onDelete={isAdmin ? handleDeleteMedicine : null} />)}
             </>
           )}
         </div>
