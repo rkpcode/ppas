@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import date, timedelta
 from app.models.medicine import Medicine, Batch
 from app.schemas.medicine import MedicineSearchResult
@@ -15,7 +15,7 @@ def require_confirmation(action: str, confirm_token: str | None = None) -> None:
         raise PermissionError(f"{action} requires human confirmation token")
 
 def search_medicines(db: Session, query: str) -> list[MedicineSearchResult]:
-    medicines = db.query(Medicine).filter(Medicine.name.ilike(f"%{query}%")).all()
+    medicines = db.query(Medicine).options(joinedload(Medicine.batches)).filter(Medicine.name.ilike(f"%{query}%")).all()
     results = []
     for med in medicines:
         total_stock = sum(b.quantity for b in med.batches)
@@ -26,6 +26,7 @@ def search_medicines(db: Session, query: str) -> list[MedicineSearchResult]:
             manufacturer=med.manufacturer,
             category=med.category,
             unit_price=med.unit_price,
+            unit_type=getattr(med, "unit_type", "strip") or "strip",
             is_schedule_h=med.is_schedule_h,
             total_stock=total_stock
         ))
@@ -38,7 +39,7 @@ def get_medicine_detail(db: Session, medicine_id: int) -> Medicine:
     return med
 
 def get_low_stock_medicines(db: Session, threshold: int = 10) -> list[MedicineSearchResult]:
-    medicines = db.query(Medicine).all()
+    medicines = db.query(Medicine).options(joinedload(Medicine.batches)).all()
     results = []
     for med in medicines:
         total_stock = sum(b.quantity for b in med.batches)
@@ -50,6 +51,7 @@ def get_low_stock_medicines(db: Session, threshold: int = 10) -> list[MedicineSe
                 manufacturer=med.manufacturer,
                 category=med.category,
                 unit_price=med.unit_price,
+                unit_type=getattr(med, "unit_type", "strip") or "strip",
                 is_schedule_h=med.is_schedule_h,
                 total_stock=total_stock
             ))

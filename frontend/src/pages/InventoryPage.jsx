@@ -15,6 +15,7 @@ function StockBadge({ qty }) {
 function MedicineCard({ item, onEdit, onAddStock }) {
   const stock = item.total_stock ?? item.quantity_strips ?? 0;
   const price = item.unit_price ?? item.price_per_strip;
+  const unit = item.unit_type || 'strip';
   const isOut = stock <= 0;
   return (
     <div className={`${styles.card} ${isOut ? styles.cardOut : ''}`}>
@@ -26,16 +27,15 @@ function MedicineCard({ item, onEdit, onAddStock }) {
         <StockBadge qty={stock} />
       </div>
       <div className={styles.cardMeta}>
-        <span>📦 {stock} strips</span>
+        <span>📦 {stock} {unit}s</span>
         {item.expiry_date && (
           <span>📅 Exp: {new Date(item.expiry_date).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</span>
         )}
         {price != null && (
-          <span style={{ color: 'var(--rupee)' }}>₹{price}/strip</span>
+          <span style={{ color: 'var(--rupee)' }}>₹{price}/{unit}</span>
         )}
       </div>
       <div className={styles.cardActions}>
-        <button className={styles.actionBtn} onClick={() => onAddStock(item)}>📦 +Stock</button>
         <button className={styles.actionBtn} onClick={() => onEdit(item)}>✏️ Edit</button>
       </div>
     </div>
@@ -81,6 +81,7 @@ export function InventoryPage() {
       generic_name: formData.get('generic_name'),
       manufacturer: formData.get('manufacturer'),
       unit_price: Number(formData.get('unit_price')),
+      unit_type: formData.get('unit_type') || 'strip',
     };
     try {
       if (medModal.data) {
@@ -126,9 +127,6 @@ export function InventoryPage() {
       <div className={styles.pageHeader}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 className={styles.heading}>📦 Inventory</h1>
-          <button className={styles.addBtn} onClick={() => setMedModal({ open: true, data: null })}>
-            + Add Medicine
-          </button>
         </div>
         <div className={styles.searchBox}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -206,6 +204,15 @@ export function InventoryPage() {
               <div className={styles.formGroup}>
                 <label>Unit Price (₹)</label>
                 <input name="unit_price" type="number" step="0.01" required defaultValue={medModal.data?.unit_price} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Unit Type (बिक्री का प्रकार)</label>
+                <select name="unit_type" defaultValue={medModal.data?.unit_type || 'strip'} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e0' }}>
+                  <option value="strip">Strip (पत्ता)</option>
+                  <option value="tablet">Tablet / Tab (गोली)</option>
+                  <option value="bottle">Bottle / Syrups (शीशी)</option>
+                  <option value="piece">Piece / Box (पीस / डिब्बा)</option>
+                </select>
               </div>
               <div className={styles.modalActions}>
                 <button type="button" onClick={() => setMedModal({open:false, data:null})} className={styles.btnSecondary}>Cancel</button>

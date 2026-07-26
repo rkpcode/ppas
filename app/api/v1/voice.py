@@ -38,7 +38,7 @@ async def voice_query(
         # 2. Call transcribe_audio()
         start_stt = time.time()
         try:
-            transcribed_text = await transcribe_audio(audio_bytes, language_hint="hi-IN")
+            transcribed_text = await transcribe_audio(audio_bytes, language_hint="hi-IN", mime_type=file.content_type)
             stt_duration = time.time() - start_stt
             logger.info(f"STT Duration: {stt_duration:.2f}s")
             

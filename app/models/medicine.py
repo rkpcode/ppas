@@ -12,6 +12,7 @@ class Medicine(Base):
     manufacturer = Column(String, nullable=True)
     category = Column(String, nullable=True)
     unit_price = Column(Numeric(10, 2), nullable=False)
+    unit_type = Column(String, default="strip", nullable=False)
     is_schedule_h = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

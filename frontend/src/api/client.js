@@ -16,6 +16,10 @@ export async function apiFetch(path, options = {}) {
     return;
   }
 
+  if (res.status === 503) {
+    throw new Error('Server is currently waking up or restarting. Please wait 1-2 minutes and try again.');
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || 'Request failed');

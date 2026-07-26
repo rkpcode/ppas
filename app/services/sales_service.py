@@ -14,14 +14,78 @@ logger = logging.getLogger(__name__)
 
 import google.generativeai as genai
 
-def parse_sales_gemini(audio_bytes: Optional[bytes] = None, text: Optional[str] = None) -> Dict[str, Any]:
+def _clean_mime_type(mime_type: Optional[str]) -> str:
+    if not mime_type:
+        return "audio/webm"
+    clean = mime_type.split(";")[0].strip().lower()
+    if clean in ["audio/webm", "audio/mp4", "audio/wav", "audio/mp3", "audio/mpeg", "audio/ogg", "audio/aac", "audio/m4a", "audio/flac"]:
+        return clean
+    if "webm" in clean:
+        return "audio/webm"
+    if "mp4" in clean or "m4a" in clean:
+        return "audio/mp4"
+    if "ogg" in clean:
+        return "audio/ogg"
+    if "wav" in clean:
+        return "audio/wav"
+    return "audio/webm"
+
+
+def parse_sales_gemini(audio_bytes: Optional[bytes] = None, text: Optional[str] = None, mime_type: str = "audio/webm") -> Dict[str, Any]:
     """
-    Uses Google Gemini 1.5 Flash to extract structured sales details from either audio or text.
+    Uses Google Gemini 1.5 Flash to extract structured sales details from either audio or text via 2-step STT.
     """
     genai.configure(api_key=settings.GEMINI_API_KEY)
     model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    prompt = """You are a pharmacy AI assistant. Extract sale details from the following input (audio or text in Hindi/English/Hinglish).
+    spoken_text = text.strip() if text else None
+
+    if audio_bytes:
+        clean_mime = _clean_mime_type(mime_type)
+        content_parts = {"mime_type": clean_mime, "data": audio_bytes}
+        
+        # Step 1: Transcribe Spoken Audio
+        stt_prompt = (
+            "You are an expert speech recognition model for Indian Pharmacies. "
+            "Transcribe the spoken sale order audio accurately in Hindi, English, or Hinglish. "
+            "Focus on medicine names, quantities, numbers, prices, and customer names. "
+            "Return ONLY the transcribed text. Do not add formatting or markdown. "
+            "If the audio is completely silent or contains no speech, return empty string."
+        )
+        import tempfile
+        import os
+        ext = ".webm" if "webm" in clean_mime else ".mp4"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_audio:
+            temp_audio.write(audio_bytes)
+            temp_path = temp_audio.name
+            
+        try:
+            uploaded_file = genai.upload_file(temp_path, mime_type="video/webm" if "webm" in ext else "video/mp4")
+            stt_response = model.generate_content([stt_prompt, uploaded_file])
+            if stt_response and stt_response.text:
+                spoken_text = stt_response.text.strip()
+                logger.info(f"Sales STT transcribed: '{spoken_text}'")
+            try:
+                uploaded_file.delete()
+            except:
+                pass
+        except Exception as e:
+            logger.error(f"Gemini Sales STT failed: {e}")
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+
+    if not spoken_text or spoken_text.lower() in ["unknown", "empty", ""]:
+        return {
+            "medicine_name": "",
+            "quantity": 1,
+            "unit_type": "strip",
+            "claimed_price": None,
+            "customer_name": None,
+            "transcribed_text": None
+        }
+
+    # Step 2: Structured JSON extraction from spoken_text
+    prompt = f"""You are a pharmacy AI assistant. Extract sale details from the following input text (Hindi/English/Hinglish).
 
 Extract the following JSON fields:
 - "medicine_name": string (name of the medicine spoken, e.g. "Dolo 650", "Crocin", "Azithral")
@@ -32,19 +96,11 @@ Extract the following JSON fields:
 
 Return ONLY a valid JSON object without any extra text or markdown syntax.
 
-Example output:
-{"medicine_name": "Dolo 650", "quantity": 2, "unit_type": "strip", "claimed_price": 60.0, "customer_name": null}
+Spoken Input: "{spoken_text}"
 """
-    
-    if audio_bytes:
-        content_parts = {"mime_type": "audio/webm", "data": audio_bytes}
-    elif text:
-        content_parts = f"Spoken text: \"{text}\""
-    else:
-        raise ValueError("Must provide either audio or text")
 
     try:
-        response = model.generate_content([prompt, content_parts])
+        response = model.generate_content(prompt)
         content = response.text.strip()
         
         if content.startswith("```json"):
@@ -55,24 +111,31 @@ Example output:
             content = content[:-3]
         content = content.strip()
         
-        return json.loads(content)
+        parsed = json.loads(content)
+        if isinstance(parsed, dict):
+            parsed["transcribed_text"] = spoken_text
+            if not parsed.get("medicine_name"):
+                parsed["medicine_name"] = spoken_text
+            return parsed
     except Exception as e:
         logger.error(f"Failed to parse LLM JSON response: {e}")
-        return {
-            "medicine_name": text if text else "Unknown Audio",
-            "quantity": 1,
-            "unit_type": "unit",
-            "claimed_price": None,
-            "customer_name": None
-        }
 
-def process_voice_sale_draft(db: Session, audio_bytes: Optional[bytes] = None, text: Optional[str] = None) -> Dict[str, Any]:
+    return {
+        "medicine_name": spoken_text,
+        "quantity": 1,
+        "unit_type": "strip",
+        "claimed_price": None,
+        "customer_name": None,
+        "transcribed_text": spoken_text
+    }
+
+def process_voice_sale_draft(db: Session, audio_bytes: Optional[bytes] = None, text: Optional[str] = None, mime_type: str = "audio/webm") -> Dict[str, Any]:
     """
     Parses voice audio or text and matches against DB medicines to return a draft sale item.
     Auto-suggests entry if medicine isn't registered yet.
     """
-    extracted = parse_sales_gemini(audio_bytes=audio_bytes, text=text)
-    med_name = extracted.get("medicine_name", text if text else "Unknown")
+    extracted = parse_sales_gemini(audio_bytes=audio_bytes, text=text, mime_type=mime_type)
+    med_name = extracted.get("medicine_name", text if text else "")
     quantity = int(extracted.get("quantity", 1))
     
     # DB Lookup (case-insensitive fuzzy match)
@@ -100,11 +163,12 @@ def process_voice_sale_draft(db: Session, audio_bytes: Optional[bytes] = None, t
         return {
             "matched": True,
             "raw_text": text,
+            "transcribed_text": extracted.get("transcribed_text"),
             "medicine_id": medicine.id,
             "medicine_name": medicine.name,
             "generic_name": medicine.generic_name,
             "quantity": quantity,
-            "unit_type": extracted.get("unit_type", "strip"),
+            "unit_type": getattr(medicine, "unit_type", None) or extracted.get("unit_type", "strip"),
             "unit_price": unit_price,
             "total_price": float(calculated_price),
             "available_stock": total_stock,
@@ -120,6 +184,7 @@ def process_voice_sale_draft(db: Session, audio_bytes: Optional[bytes] = None, t
             "matched": False,
             "auto_register": True,
             "raw_text": text,
+            "transcribed_text": extracted.get("transcribed_text"),
             "medicine_id": None,
             "medicine_name": med_name,
             "generic_name": med_name,

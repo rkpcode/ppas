@@ -20,6 +20,7 @@ class MedicineBase(BaseModel):
     manufacturer: Optional[str] = None
     category: Optional[str] = None
     unit_price: Decimal
+    unit_type: str = "strip"
     is_schedule_h: bool = False
 
 class Medicine(MedicineBase):
@@ -43,6 +44,7 @@ class MedicineCreate(BaseModel):
     manufacturer: Optional[str] = None
     category: Optional[str] = None
     unit_price: Decimal
+    unit_type: str = "strip"
     is_schedule_h: bool = False
 
 class MedicineUpdate(BaseModel):
@@ -51,6 +53,7 @@ class MedicineUpdate(BaseModel):
     manufacturer: Optional[str] = None
     category: Optional[str] = None
     unit_price: Optional[Decimal] = None
+    unit_type: Optional[str] = None
     is_schedule_h: Optional[bool] = None
 
 class BatchCreate(BaseModel):
@@ -70,6 +73,7 @@ class BulkStockItem(BaseModel):
     batch_number: Optional[str] = "RECEIPT"
     quantity: int = 1
     unit_price: Optional[Decimal] = None
+    unit_type: str = "strip"
     expiry_date: Optional[date] = None
 
 class BulkStockRequest(BaseModel):

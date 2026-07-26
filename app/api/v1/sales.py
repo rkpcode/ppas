@@ -49,7 +49,7 @@ async def parse_voice_sale(
         audio_bytes = await file.read()
         if not audio_bytes:
             raise HTTPException(status_code=400, detail="Empty audio file provided.")
-        draft = process_voice_sale_draft(db, audio_bytes=audio_bytes)
+        draft = process_voice_sale_draft(db, audio_bytes=audio_bytes, mime_type=file.content_type)
     elif text:
         input_text = text.strip()
         if not input_text:

@@ -32,6 +32,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Notice: Database auto table creation: {e}")
         
+    # Apply schema migrations
+    try:
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE medicines ADD COLUMN unit_type VARCHAR NOT NULL DEFAULT 'strip'"))
+            print("Notice: Successfully added unit_type column to medicines table.")
+    except Exception as e:
+        # Expected to fail if column already exists
+        pass
+        
     task = asyncio.create_task(ping_render())
     yield
     task.cancel()

@@ -23,6 +23,9 @@ export async function login(username, password) {
   });
 
   if (!res.ok) {
+    if (res.status === 503) {
+      throw new Error('Server update chal raha hai, please wait 1-2 minutes.');
+    }
     const err = await res.json().catch(() => null);
     throw new Error(extractErrorMsg(err, 'Login failed'));
   }
@@ -44,6 +47,9 @@ export async function register(userData) {
   });
 
   if (!res.ok) {
+    if (res.status === 503) {
+      throw new Error('Server update chal raha hai, please wait 1-2 minutes.');
+    }
     const err = await res.json().catch(() => null);
     throw new Error(extractErrorMsg(err, 'Registration failed'));
   }

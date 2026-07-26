@@ -37,7 +37,7 @@ async def parse_stock_voice(
         audio_bytes = await file.read()
         if not audio_bytes:
             raise HTTPException(status_code=400, detail="Empty audio file provided.")
-        item = stock_service.parse_stock_voice(audio_bytes=audio_bytes)
+        item = stock_service.parse_stock_voice(audio_bytes=audio_bytes, mime_type=file.content_type)
     elif text:
         input_text = text.strip()
         if not input_text:
