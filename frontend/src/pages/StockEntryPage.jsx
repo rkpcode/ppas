@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { parseReceipt, parseStockVoice, confirmBulkStock } from '../api/stock';
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
@@ -166,7 +166,7 @@ function VoiceTab() {
   }
 
   // Effect to trigger parse when audioBlob is ready
-  import { useEffect } from 'react';
+
   useEffect(() => {
     if (audioBlob && !parsing && !item) {
       handleVoiceParse(audioBlob);
