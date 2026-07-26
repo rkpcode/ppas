@@ -6,6 +6,11 @@ from app.services import inventory_service
 
 router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
+@router.get("", response_model=list[MedicineSearchResult])
+@router.get("/", response_model=list[MedicineSearchResult])
+def list_inventory(search: str = "", db: Session = Depends(get_db)):
+    return inventory_service.search_medicines(db, search or "")
+
 @router.get("/search", response_model=list[MedicineSearchResult])
 def search_medicines(name: str, db: Session = Depends(get_db)):
     return inventory_service.search_medicines(db, name)

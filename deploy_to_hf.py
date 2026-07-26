@@ -3,12 +3,19 @@ import sys
 from huggingface_hub import HfApi
 
 def deploy():
-    if len(sys.argv) < 2:
+    token = sys.argv[1] if len(sys.argv) > 1 else None
+    if not token and os.path.exists(".env"):
+        with open(".env", "r") as f:
+            for line in f:
+                if line.startswith("HF_TOKEN="):
+                    token = line.split("=", 1)[1].strip().strip('"').strip("'")
+    
+    if not token:
         print("Usage: python deploy_to_hf.py <HF_TOKEN>")
         sys.exit(1)
         
-    token = sys.argv[1]
     full_repo_id = "rkpcode/pradhan-drug-house"
+
     
     api = HfApi(token=token)
     print("==================================================")
@@ -33,7 +40,8 @@ def deploy():
         print("  [-] No .env file found!")
         
     print("\n[2/2] Replacing remote codebase with local project files...")
-    ignore_patterns = [".venv/*", "__pycache__/*", "*.pyc", ".git/*", ".env"]
+    ignore_patterns = [".venv/*", "__pycache__/*", "*.pyc", ".git/*", ".env", "*.ps1", "frontend/node_modules/*", "frontend/dist/*"]
+
     
     try:
         api.upload_folder(

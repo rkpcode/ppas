@@ -21,13 +21,21 @@ async def ping_render():
             except Exception:
                 pass
 
+from app.core.database import engine, Base
+import app.models
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start the keep-alive task in the background
+    # Auto-create all tables in database schema if not present
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"Notice: Database auto table creation: {e}")
+        
     task = asyncio.create_task(ping_render())
     yield
-    # Cleanup on shutdown
     task.cancel()
+
 
 app = FastAPI(title="Pradhan Pharmacy Automation System", version="1.0.0", lifespan=lifespan)
 
@@ -43,15 +51,15 @@ app.add_middleware(
 
 app.add_exception_handler(PharmacyBaseException, pharmacy_exception_handler)
 
-app.include_router(health.router)
-app.include_router(auth.router)
-app.include_router(inventory.router)
+app.include_router(health.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(inventory.router, prefix="/api/v1")
 from app.api.v1 import agent_inventory
-app.include_router(agent_inventory.router)
+app.include_router(agent_inventory.router, prefix="/api/v1")
 
 from app.api.v1 import voice, sales
-app.include_router(voice.router)
-app.include_router(sales.router)
+app.include_router(voice.router, prefix="/api/v1")
+app.include_router(sales.router, prefix="/api/v1")
 
 @app.get("/")
 
