@@ -43,6 +43,12 @@ export function AppShell() {
           </svg>
           <span>New Sale</span>
         </NavLink>
+        <NavLink to="/stock-entry" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+          <span>Add Stock</span>
+        </NavLink>
         <NavLink to="/inventory" className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>

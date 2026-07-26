@@ -135,3 +135,115 @@
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Modals */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.modalContent {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formGroup label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.formGroup input {
+  background: var(--bg);
+  border: 1px solid var(--border-subtle);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--primary-glow);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.btnSecondary {
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.btnPrimary {
+  background: var(--primary-glow);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.addBtn {
+  background: var(--primary-glow);
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.cardActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+}
+
+.actionBtn {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+}
+
+.actionBtn:hover {
+  background: var(--border-subtle);
+}

@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { SalePage } from './pages/SalePage';
 import { InventoryPage } from './pages/InventoryPage';
+import { StockEntryPage } from './pages/StockEntryPage';
 import { AppShell } from './components/layout/AppShell';
 import './styles/globals.css';
 
@@ -27,6 +28,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/sale"      element={<SalePage />} />
         <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/stock-entry" element={<StockEntryPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -34,3 +34,43 @@ class MedicineDetail(Medicine):
 class MedicineSearchResult(MedicineBase):
     id: int
     total_stock: int
+
+# ── Stock Entry Schemas ──────────────────────────────────
+
+class MedicineCreate(BaseModel):
+    name: str
+    generic_name: Optional[str] = None
+    manufacturer: Optional[str] = None
+    category: Optional[str] = None
+    unit_price: Decimal
+    is_schedule_h: bool = False
+
+class MedicineUpdate(BaseModel):
+    name: Optional[str] = None
+    generic_name: Optional[str] = None
+    manufacturer: Optional[str] = None
+    category: Optional[str] = None
+    unit_price: Optional[Decimal] = None
+    is_schedule_h: Optional[bool] = None
+
+class BatchCreate(BaseModel):
+    batch_number: str
+    quantity: int
+    expiry_date: date
+    received_date: Optional[date] = None
+
+class BatchUpdate(BaseModel):
+    quantity: Optional[int] = None
+    expiry_date: Optional[date] = None
+
+class BulkStockItem(BaseModel):
+    medicine_name: str
+    generic_name: Optional[str] = None
+    manufacturer: Optional[str] = None
+    batch_number: Optional[str] = "RECEIPT"
+    quantity: int = 1
+    unit_price: Optional[Decimal] = None
+    expiry_date: Optional[date] = None
+
+class BulkStockRequest(BaseModel):
+    items: list[BulkStockItem]

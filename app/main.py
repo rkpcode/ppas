@@ -57,9 +57,10 @@ app.include_router(inventory.router, prefix="/api/v1")
 from app.api.v1 import agent_inventory
 app.include_router(agent_inventory.router, prefix="/api/v1")
 
-from app.api.v1 import voice, sales
+from app.api.v1 import voice, sales, stock
 app.include_router(voice.router, prefix="/api/v1")
 app.include_router(sales.router, prefix="/api/v1")
+app.include_router(stock.router, prefix="/api/v1")
 
 @app.get("/")
 
