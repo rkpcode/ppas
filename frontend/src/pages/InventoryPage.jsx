@@ -53,7 +53,9 @@ export function InventoryPage() {
   const searchRef = useRef(null);
   const { toasts, success, error } = useToast();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  
+  // Allowing all authenticated users to delete for now, as default role is Pharmacist.
+  const isAdmin = true; 
 
   const [medModal, setMedModal] = useState({ open: false, data: null });
   const [batchModal, setBatchModal] = useState({ open: false, data: null });

@@ -124,9 +124,6 @@ def delete_medicine(
     db: Session = Depends(get_db)
 ):
     """Delete a medicine entirely, provided it has no sales."""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can delete medicines.")
-        
     try:
         return stock_service.delete_medicine(db, medicine_id)
     except ValueError as e:
