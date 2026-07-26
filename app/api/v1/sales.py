@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.staff import Staff
 from app.services.auth_service import get_current_user
-from app.voice.stt import transcribe_audio
+
 from app.services.sales_service import process_voice_sale_draft, record_confirmed_sale
 from app.models.sale import Sale
 
@@ -43,25 +43,21 @@ async def parse_voice_sale(
     text: Optional[str] = Form(None)
 ):
     """
-    Parses voice recording OR text into a structured sales draft for UI review.
+    Parses voice recording OR text into a structured sales draft for UI review using Gemini Multimodal.
     """
-    input_text = ""
-    
     if file:
         audio_bytes = await file.read()
-        try:
-            input_text = await transcribe_audio(audio_bytes, language_hint="hi-IN")
-        except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Audio transcription failed: {str(e)}")
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="Empty audio file provided.")
+        draft = process_voice_sale_draft(db, audio_bytes=audio_bytes)
     elif text:
         input_text = text.strip()
+        if not input_text:
+            raise HTTPException(status_code=400, detail="Empty text provided.")
+        draft = process_voice_sale_draft(db, text=input_text)
     else:
         raise HTTPException(status_code=400, detail="Either audio file or text must be provided.")
         
-    if not input_text:
-        raise HTTPException(status_code=400, detail="Could not extract text from input.")
-        
-    draft = process_voice_sale_draft(input_text, db)
     return draft
 
 @router.post("/confirm", response_model=SaleResponse)
