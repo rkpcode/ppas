@@ -12,7 +12,12 @@ export function AuthProvider({ children }) {
     if (token) {
       getMe()
         .then(setUser)
-        .catch(() => localStorage.removeItem('pdh_token'))
+        .catch((err) => {
+          console.error("Auth error on load:", err);
+          // Only remove token if it was explicitly a 401/Auth error.
+          // The client.js already removes it on 401, so we don't need to aggressively delete here.
+          // This prevents logging out when Hugging Face space is waking up (503).
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
